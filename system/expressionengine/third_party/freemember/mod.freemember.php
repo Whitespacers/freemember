@@ -392,21 +392,35 @@ class Freemember
      */
     protected function _action_complete($errors = null)
     {
-        if (empty($errors)) {
-            // redirect to custom url or current page
-            $return_url = ee()->input->get_post('return_url') ?: $this->history(0);
-            $return_url = ee()->functions->create_url($return_url);
+        if (ee()->input->is_ajax_request()) {
+            $response = array(
+                'success' => empty($errors)
+            );
 
-            if (isset($_POST['_params']) && ee()->freemember->form_param('secure_return') == 'yes') {
-                $return_url = str_replace('http://', 'https://', $return_url);
+            if (!empty($errors)) {
+                $response['errors'] = $errors;
             }
 
-            ee()->functions->redirect($return_url);
-        } elseif (ee()->freemember->form_param('error_handling') == 'inline') {
-            return ee()->core->generate_page();
-        }
+            header('Content-type: application/json');
+            echo json_encode($response);
+            exit;
+        } else {
+            if (empty($errors)) {
+                // redirect to custom url or current page
+                $return_url = ee()->input->get_post('return_url') ?: $this->history(0);
+                $return_url = ee()->functions->create_url($return_url);
 
-        return ee()->output->show_user_error(false, $errors);
+                if (isset($_POST['_params']) && ee()->freemember->form_param('secure_return') == 'yes') {
+                    $return_url = str_replace('http://', 'https://', $return_url);
+                }
+
+                ee()->functions->redirect($return_url);
+            } elseif (ee()->freemember->form_param('error_handling') == 'inline') {
+                return ee()->core->generate_page();
+            }
+
+            return ee()->output->show_user_error(false, $errors);
+        }
     }
 
     protected function history($id)
